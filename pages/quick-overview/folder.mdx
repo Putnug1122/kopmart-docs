@@ -2,7 +2,88 @@ import Bleed from 'nextra-theme-docs/bleed'
 
 # Struktur Folder
 
+Spring Boot adalah framework independen yang membuat hidup kita sangat mudah karena kita tidak harus memilih versi dependensi yang berbeda berdasarkan versi framework Spring, semuanya diurus oleh Spring Boot.
+
+Pada project kopmart ini, developer mengikuti struktur folder berdasarkan layer yang ada di dalam framework. Berikut struktur folder yang ada di dalam projek ini:
+
 <div style={{textAlign:'center'  }}>
 
 <Bleed>![Folder-Structure](../../public/folder.png)</Bleed>
 </div>
+
+## Controller
+
+<div style={{textAlign:'center'  }}>
+
+<Bleed>![Folder-Structure](../../public/controller.png)</Bleed>
+</div>
+Bagian controller berfungsi untuk menggabunggkan semuanya bersama-sama sejak request diterima hingga respons disiapkan dan dikirim kembali. Controller layer hadir dalam package controller.
+
+## Entity
+
+<div style={{textAlign:'center'  }}>
+
+<Bleed>![Folder-Structure](../../public/entity.png)</Bleed>
+</div>
+Bagian entity berfungsi untuk menyimpan data yang akan dikirimkan ke dalam database. Entity layer hadir dalam package entity.
+
+## Enums
+
+<div style={{textAlign:'center'  }}>
+
+<Bleed>![Folder-Structure](../../public/enums.png)</Bleed>
+</div>
+Bagian enums merupakan sebuah utility class yang berfungsi untuk membuat enum, bagian ini berfungsi untuk memberikan efisiensi dan fleksibilitas dalam penggunaan memori. Veriabel enum hanya akan mengambil satu nilai dari konstanta yang ada.
+
+## Exception
+
+<div style={{textAlign:'center'  }}>
+
+<Bleed>![Folder-Structure](../../public/exceptions.png)</Bleed>
+</div>
+Bagian exceptions berfungsi untuk menangani exception yang terjadi pada saat proses pemrosesan. Exception layer hadir dalam package exception.
+
+## Form
+
+<div style={{textAlign:'center'  }}>
+
+<Bleed>![Folder-Structure](../../public/form.png)</Bleed>
+</div>
+
+Bagian ini terdapat sebuah kelas form untuk menangani login form yang akan dikirimkan ke dalam database. Form layer hadir dalam package form.
+
+## Repository
+
+<div style={{textAlign:'center'  }}>
+
+<Bleed>![Folder-Structure](../../public/repo.png)</Bleed>
+</div>
+
+Repositori berisi mekanisme untuk mengenkapsulasi penyimpanan, pengambilan, dan perilaku pencarian yang mengemulasi kumpulan objek. Ini adalah spesialisasi dari anotasi @Component yang memungkinkan kelas implementasi dideteksi secara otomatis melalui pemindaian classpath.
+
+## Security
+
+<div style={{textAlign:'center'  }}>
+
+<Bleed>![Folder-Structure](../../public/security.png)</Bleed>
+</div>
+
+Security setting ada di bawah paket configuration dan configuration sebenarnya dilakukan di bawah kelas yang ada dalam package security. Aplikasi memiliki konsep keamanan yang berbeda untuk portal admin dan REST API, untuk portal kopmart telah menerapkan mekanisme spring session default yang didasarkan pada konsep sessionID dan cookie. Untuk REST API kopmart telah menggunakan mekanisme otentikasi berbasis token JWT.
+
+## Service
+
+<div style={{textAlign:'center'  }}>
+
+<Bleed>![Folder-Structure](../../public/service.png)</Bleed>
+</div>
+
+Service layer berfungsi untuk menangani proses yang berhubungan dengan database. Dengan menggunakan repository, service dapat dengan efektif menambahkan, mengubah, dan menghapus data.
+
+## Value Object
+
+<div style={{textAlign:'center'  }}>
+
+<Bleed>![Folder-Structure](../../public/vo.png)</Bleed>
+</div>
+
+Value Object menyimpan data yang akan dikirimkan ke dalam database. Value Object layer hadir dalam package valueobject.

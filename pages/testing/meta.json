@@ -1,3 +1,8 @@
 {
-  "unit-test": "Unit Test"
+  "unit-test": "Unit Test",
+  "cart-service": "Cart Service Test",
+  "order-service": "Order Service Test",
+  "product-service": "Product Service Test",
+  "user-service": "User Service Test",
+  "product-inorder-service": "Product In Order Service Test"
 }
