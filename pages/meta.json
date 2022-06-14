@@ -1,7 +1,12 @@
 {
-  "index": "Introduction",
-  "get-started": "Get Started",
+  "index": "Latar Belakang",
+  "tujuan": "Tujuan",
+  "quick-overview": "Quick Overview",
+  "diagram": "Diagram",
+  "testing": "Testing",
   "features": "Features",
+  "design-pattern": "Design Pattern",
+  "get-started": "Get Started",
   "themes": "Themes",
   "advanced": "Advanced"
 }
