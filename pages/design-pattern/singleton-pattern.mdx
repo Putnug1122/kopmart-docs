@@ -1,0 +1,229 @@
+# Singleton Pattern
+
+Singleton Pattern adalah mekanisme yang memastikan hanya satu contoh objek yang ada per aplikasi. Pola ini dapat berguna saat mengelola sumber daya bersama atau menyediakan layanan lintas sektoral, seperti logging.
+
+Pada web application kopmart digunakan singleton pattern, yaitu Autowired Singletons pada layer service.
+
+Pada `file CartServiceImpl.java` :
+
+```java
+package com.deta.kopmart_backend.service.impl;
+
+import com.deta.kopmart_backend.entity.Cart;
+import com.deta.kopmart_backend.entity.OrderMain;
+import com.deta.kopmart_backend.entity.ProductInOrder;
+import com.deta.kopmart_backend.entity.User;
+import com.deta.kopmart_backend.enums.ResultEnum;
+import com.deta.kopmart_backend.exception.MyException;
+import com.deta.kopmart_backend.repository.CartRepository;
+import com.deta.kopmart_backend.repository.OrderRepository;
+import com.deta.kopmart_backend.repository.ProductInOrderRepository;
+import com.deta.kopmart_backend.repository.UserRepository;
+import com.deta.kopmart_backend.service.CartService;
+import com.deta.kopmart_backend.service.ProductService;
+import com.deta.kopmart_backend.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.SecondaryTable;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.Set;
+
+/**
+ * @author deta
+ * @description Concrete implementation of CartService
+ */
+@Service
+public class CartServiceImpl implements CartService {
+
+    @Autowired
+    ProductService productService;
+
+    @Autowired
+    OrderRepository orderRepository;
+
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    ProductInOrderRepository productInOrderRepository;
+
+    @Autowired
+    CartRepository cartRepository;
+
+    @Autowired
+    UserService userService;
+
+    /**
+     * @param user User who's cart is being retrieved
+     * @return Cart object
+     * @description Retrieves the cart for the user
+     */
+    @Override
+    public Cart getCart(User user) {
+        return user.getCart();
+    }
+
+    /**
+     * @param productInOrders Collection of ProductInOrder objects
+     * @param user User who's cart is being merged
+     * @description Merges the local cart with the cart in the database
+     */
+    @Override
+    public void mergeLocalCart(Collection<ProductInOrder> productInOrders, User user) {
+        Cart finalCart = user.getCart();
+        productInOrders.forEach(productInOrder -> {
+            Set<ProductInOrder> set = finalCart.getProducts();
+            Optional<ProductInOrder> old = set.stream().filter(e -> e.getProductId().equals(productInOrder.getProductId())).findFirst();
+            ProductInOrder prod;
+            if (old.isPresent()) {
+                prod = old.get();
+                prod.setCount(productInOrder.getCount() + prod.getCount());
+            } else {
+                prod = productInOrder;
+                prod.setCart(finalCart);
+                finalCart.getProducts().add(prod);
+            }
+            productInOrderRepository.save(prod);
+        });
+        cartRepository.save(finalCart);
+    }
+
+    /**
+     * @param itemId ItemId of the product being deleted
+     * @param user User who's cart is being deleted
+     * @description Deletes the product from the cart
+     */
+    @Override
+    @Transactional
+    public void delete(String itemId, User user) {
+        if(itemId.equals("") || user == null) {
+            throw new MyException(ResultEnum.ORDER_STATUS_ERROR);
+        }
+
+        Optional<ProductInOrder> op = user.getCart().getProducts().stream().filter(e -> itemId.equals(e.getProductId())).findFirst();
+        op.ifPresent(productInOrder -> {
+            productInOrder.setCart(null);
+            productInOrderRepository.deleteById(productInOrder.getId());
+        });
+    }
+
+    /**
+     * @param user User who's cart is being checked out
+     * @description Checks out the cart and creates an order
+     */
+    @Override
+    @Transactional
+    public void checkout(User user) {
+        OrderMain order = new OrderMain(user);
+        orderRepository.save(order);
+
+        user.getCart().getProducts().forEach(productInOrder -> {
+            productInOrder.setCart(null);
+            productInOrder.setOrderMain(order);
+            productService.decreaseStock(productInOrder.getProductId(), productInOrder.getCount());
+            productInOrderRepository.save(productInOrder);
+
+        });
+    }
+}
+```
+
+Pada file `UserServiceImpl.java` :
+
+```java
+package com.deta.kopmart_backend.service.impl;
+
+import com.deta.kopmart_backend.entity.Cart;
+import com.deta.kopmart_backend.entity.User;
+import com.deta.kopmart_backend.enums.ResultEnum;
+import com.deta.kopmart_backend.exception.MyException;
+import com.deta.kopmart_backend.repository.CartRepository;
+import com.deta.kopmart_backend.repository.UserRepository;
+import com.deta.kopmart_backend.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collection;
+
+/**
+ * @author deta
+ * @description Concrete implementation of UserService
+ */
+@Service
+@DependsOn("passwordEncoder")
+public class UserServiceImpl implements UserService {
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    CartRepository cartRepository;
+
+
+    /**
+     * @param email String of email
+     * @return User
+     * @description Get user by email
+     */
+    @Override
+    public User findOne(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    /**
+     * @param user User Object
+     * @return User
+     * @description Register a new user
+     * @throws MyException if the user already exists
+     */
+    @Override
+    public User save(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        try {
+            User savedUser = userRepository.save(user);
+
+            // initial Cart
+            Cart savedCart = cartRepository.save(new Cart(savedUser));
+            savedUser.setCart(savedCart);
+            return userRepository.save(savedUser);
+
+        } catch (Exception e) {
+            throw new MyException(ResultEnum.VALID_ERROR);
+        }
+    }
+
+    /**
+     * @param user User Object
+     * @return User
+     * @description Update user
+     */
+    @Override
+    @Transactional
+    public User update(User user) {
+        User oldUser = userRepository.findByEmail(user.getEmail());
+        oldUser.setName(user.getName());
+        oldUser.setPhone(user.getPhone());
+        oldUser.setAddress(user.getAddress());
+        return userRepository.save(oldUser);
+    }
+
+    /**
+     * @param role String of role
+     * @return Collection<User>
+     * @description Get all users by role
+     */
+    @Override
+    public Collection<User> findByRole(String role) {
+        return userRepository.findAllByRole(role);
+    }
+}
+```
